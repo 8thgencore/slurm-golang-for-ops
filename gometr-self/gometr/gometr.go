@@ -1,5 +1,9 @@
 package gometr
 
+import (
+	"time"
+)
+
 // --------------------------------------------------
 // HealtCheck struct
 // --------------------------------------------------
@@ -18,6 +22,8 @@ type HealthCheck struct {
 // --------------------------------------------------
 // GoMetrClient struct
 // --------------------------------------------------
+var startTime = time.Now()
+
 type GoMetrClient struct {
 	url     string
 	timeout int
@@ -43,13 +49,15 @@ func (g GoMetrClient) GetID() string {
 }
 
 func (g GoMetrClient) Health() bool {
-	return g.GetHealth().Status == PassStatus
+	return g.getHealth().Status == PassStatus
 }
 
-func (g GoMetrClient) GetHealth() HealthCheck {
-	if g.url[0]%2 == 0 {
-		return HealthCheck{g.url, PassStatus}
-	} else {
+func (g GoMetrClient) getHealth() HealthCheck {
+	timeout := startTime.Add(time.Duration(g.timeout) * time.Second)
+	end := time.Now().After(timeout)
+
+	if end {
 		return HealthCheck{g.url, FailStatus}
 	}
+	return HealthCheck{g.url, PassStatus}
 }

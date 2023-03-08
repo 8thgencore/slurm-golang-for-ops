@@ -1,6 +1,7 @@
 package gometr
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -23,8 +24,9 @@ type Checker struct {
 	items []Checkable
 }
 
-func (c *Checker) Add(item Checkable) {
-	c.items = append(c.items, item)
+// add object with channel
+func (c *Checker) Add(ch <-chan Checkable) {
+	c.items = append(c.items, <-ch)
 }
 
 func (c *Checker) String() string {
@@ -45,12 +47,20 @@ func (c *Checker) Check() {
 }
 
 func (c *Checker) Run() {
+	fmt.Printf("‼️ Проверки запущены\n")
 	ticker := time.NewTicker(5 * time.Second)
+
 	for tick := range ticker.C {
+		fmt.Println("")
 		for _, val := range c.items {
 			go check(tick, val)
 		}
 	}
+}
+
+func (c *Checker) Stop(cancel context.CancelFunc) {
+	fmt.Printf("‼️ Проверки остановлены\n")
+	cancel()
 }
 
 func check(tick time.Time, client Checkable) {
