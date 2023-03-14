@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/jackc/pgx/v4/pgxpool"
-	log "github.com/sirupsen/logrus"
+	log "service/pkg/logger"
 )
 
 type AppServer struct {
@@ -35,17 +35,17 @@ func NewServer(config cfg.Application, ctx context.Context) *AppServer {
 }
 
 func (server *AppServer) Serve() {
-	log.Println("Starting server")
+	log.Infof("Starting server")
 	var err error
 
 	// start the scheduler asynchronously
 	server.scheduler.StartAsync()
 
 	// init database connection
-	log.Println(server.config.DbUrl)
+	log.Infof(server.config.DbUrl)
 	server.db, err = pgxpool.Connect(server.ctx, server.config.DbUrl)
 	if err != nil {
-		log.Fatalln(err)
+		log.Errorf(err.Error())
 	}
 
 	// init storage
@@ -70,12 +70,12 @@ func (server *AppServer) Serve() {
 		Handler: routes,
 	}
 
-	log.Println("Server started")
+	log.Infof("Server started")
 
 	// run server
 	err = server.srv.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		log.Fatalln(err)
+		log.Errorf(err.Error())
 	}
 
 	return
@@ -83,7 +83,7 @@ func (server *AppServer) Serve() {
 
 // Shutdown stops the app an
 func (server *AppServer) Shutdown() {
-	log.Printf("server stopped")
+	log.Infof("server stopped")
 
 	// Clears the scheduler
 	server.scheduler.Clear()
@@ -102,7 +102,7 @@ func (server *AppServer) Shutdown() {
 		log.Fatalf("server Shutdown Failed:%s", err)
 	}
 
-	log.Printf("server exited properly")
+	log.Infof("server exited properly")
 
 	if err == http.ErrServerClosed {
 		err = nil

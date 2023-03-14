@@ -6,9 +6,8 @@ import (
 	"os/signal"
 	"service/internal/app"
 	cfg "service/internal/config"
+	log "service/pkg/logger"
 	"syscall"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -24,7 +23,7 @@ func main() {
 
 	go func() {
 		oscall := <-c //если таки что то пришло
-		log.Printf("system call:%+v", oscall)
+		log.Infof("system call:%+v", oscall)
 		server.Shutdown() //выключаем сервер
 		cancel()
 	}()

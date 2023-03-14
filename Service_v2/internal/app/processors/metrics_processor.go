@@ -33,7 +33,6 @@ func (processor *MetricsProcessor) Add(metric models.Metric) error {
 	return processor.storage.Add(metric)
 }
 
-func (processor *MetricsProcessor) List(name string, startDate time.Time, endDate time.Time) []models.Metric {
-	// TODO:
-	return processor.storage.List(name, startDate, endDate)
+func (processor *MetricsProcessor) List(name string, startDate time.Time, endDate time.Time, offset int, limit int) []models.Metric {
+	return processor.storage.List(name, startDate, endDate, offset, limit)
 }

@@ -6,20 +6,15 @@ import (
 	"service/internal/app/models"
 	"time"
 
+	log "service/pkg/logger"
+
 	"github.com/georgysavva/scany/pgxscan"
-	log "github.com/sirupsen/logrus"
 )
 
 func (storage *Storage) Add(metrics ...models.Metric) error {
 	ctx := context.Background()
 	tx, err := storage.databasePool.Begin(ctx)
-	defer func() {
-		// откатываем транзакцию только если она еще не завершена
-		err = tx.Rollback(context.Background())
-		if err != nil {
-			log.Errorln(err)
-		}
-	}()
+	defer tx.Rollback(ctx)
 
 	query := "INSERT INTO metrics (name, value, timestamp) VALUES ($1, $2, $3)"
 
@@ -27,7 +22,7 @@ func (storage *Storage) Add(metrics ...models.Metric) error {
 	const stmtName = "insert metrics"
 	_, err = tx.Prepare(ctx, stmtName, query)
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("Prepare: %v", err)
 		return err
 	}
 
@@ -35,7 +30,7 @@ func (storage *Storage) Add(metrics ...models.Metric) error {
 	for _, m := range metrics {
 		_, err = tx.Exec(ctx, query, m.Name, m.Value, m.Date)
 		if err != nil {
-			log.Errorln(err)
+			log.Errorf("Insert row: %v", err)
 			return err
 		}
 	}
@@ -43,14 +38,14 @@ func (storage *Storage) Add(metrics ...models.Metric) error {
 	// commit transaction if no errors
 	err = tx.Commit(ctx)
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("Commit transaction: %v", err)
 		return err
 	}
 
 	return err
 }
 
-func (storage *Storage) List(name string, startDate time.Time, endDate time.Time) []models.Metric {
+func (storage *Storage) List(name string, startDate time.Time, endDate time.Time, offset int, limit int) []models.Metric {
 	// prepare a query with placeholders for parameters
 	query := "SELECT timestamp, name, value FROM metrics WHERE 1=1"
 
@@ -71,6 +66,16 @@ func (storage *Storage) List(name string, startDate time.Time, endDate time.Time
 		args = append(args, endDate)
 		placeholderNum++
 	}
+	if offset != 0 {
+		query += fmt.Sprintf(" OFFSET $%d", placeholderNum)
+		args = append(args, offset)
+		placeholderNum++
+	}
+	if limit != 0 {
+		query += fmt.Sprintf(" LIMIT $%d", placeholderNum)
+		args = append(args, limit)
+		placeholderNum++
+	}
 
 	var dbResult []models.Metric
 
@@ -78,7 +83,7 @@ func (storage *Storage) List(name string, startDate time.Time, endDate time.Time
 	err := pgxscan.Select(ctx, storage.databasePool, &dbResult, query, args...)
 
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf(err.Error())
 	}
 
 	return dbResult

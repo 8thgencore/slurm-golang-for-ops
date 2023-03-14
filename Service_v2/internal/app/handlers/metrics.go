@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"service/internal/app/models"
 	"service/internal/app/processors"
+	log "service/pkg/logger"
+	"strconv"
 	"time"
 )
 
@@ -19,31 +20,31 @@ func NewMetricsHandler(processor *processors.MetricsProcessor) *MetricsHandler {
 }
 
 func (handler *MetricsHandler) List(w http.ResponseWriter, r *http.Request) {
-	log.Println("Listing metrics...")
+	log.Infof("Listing metrics...")
 
 	var err error
 
-	// // get limit from query parameter or use default value of 10 if not specified or invalid
-	// limit := 10 // default limit value
-	// if r.URL.Query().Get("limit") != "" {
-	// 	limitStr := r.URL.Query().Get("limit")
-	// 	limitInt64, err := strconv.ParseInt(limitStr, 10, 32)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	limit = int(limitInt64)
-	// }
+	// get limit from query parameter or use default value of 10 if not specified or invalid
+	limit := 10 // default limit value
+	if r.URL.Query().Get("limit") != "" {
+		limitStr := r.URL.Query().Get("limit")
+		limitInt64, err := strconv.ParseInt(limitStr, 10, 32)
+		if err != nil {
+			log.Errorf(err.Error())
+		}
+		limit = int(limitInt64)
+	}
 
-	// // get offset from query parameter or use default value of 0 if not specified or invalid
-	// offset := 0 // default offset value
-	// if r.URL.Query().Get("offset") != "" {
-	// 	offsetStr := r.URL.Query().Get("offset")
-	// 	offsetInt64, err := strconv.ParseInt(offsetStr, 10, 32)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	offset = int(offsetInt64)
-	// }
+	// get offset from query parameter or use default value of 0 if not specified or invalid
+	offset := 0 // default offset value
+	if r.URL.Query().Get("offset") != "" {
+		offsetStr := r.URL.Query().Get("offset")
+		offsetInt64, err := strconv.ParseInt(offsetStr, 10, 32)
+		if err != nil {
+			log.Errorf(err.Error())
+		}
+		offset = int(offsetInt64)
+	}
 
 	// get time_from from query parameter or use zero value if not specified or invalid
 	timeFrom := time.Time{} // zero value for time
@@ -51,7 +52,7 @@ func (handler *MetricsHandler) List(w http.ResponseWriter, r *http.Request) {
 		timeFromStr := r.URL.Query().Get("time_from")
 		timeFrom, err = time.Parse(time.RFC3339, timeFromStr)
 		if err != nil {
-			log.Println(err)
+			log.Errorf(err.Error())
 		}
 	}
 
@@ -61,7 +62,7 @@ func (handler *MetricsHandler) List(w http.ResponseWriter, r *http.Request) {
 		timeToStr := r.URL.Query().Get("time_to")
 		timeTo, err = time.Parse(time.RFC3339, timeToStr)
 		if err != nil {
-			log.Println(err)
+			log.Errorf(err.Error())
 		}
 	}
 
@@ -74,7 +75,7 @@ func (handler *MetricsHandler) List(w http.ResponseWriter, r *http.Request) {
 	// create a slice of metrics to store the filtered and sorted results
 	result := make([]models.Metric, 0)
 
-	result = handler.processor.List(name, timeFrom, timeTo)
+	result = handler.processor.List(name, timeFrom, timeTo, offset, limit)
 
 	// wrapper result
 	var m = map[string]interface{}{

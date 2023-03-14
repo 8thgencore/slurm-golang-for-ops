@@ -2,12 +2,13 @@ package schedulers
 
 import (
 	"bufio"
-	"fmt"
 	"net/http"
+	"service/internal/app/models"
 	"service/internal/app/processors"
 	cfg "service/internal/config"
-
-	log "github.com/sirupsen/logrus"
+	log "service/pkg/logger"
+	"strings"
+	"time"
 )
 
 type GometrScheduler struct {
@@ -21,20 +22,27 @@ func NewGometrScheduler(processor *processors.MetricsProcessor) *GometrScheduler
 }
 
 func (scheduler *GometrScheduler) ParseGometr() error {
-	log.Println("[GometrScheduler] Start ParseGometr")
-	log.Println(cfg.ExternalConfig.GometrUrl + "/metrics")
+	log.Infof("[GometrScheduler] Start ParseGometr")
 
-	resp, err := http.Get(cfg.ExternalConfig.GometrUrl  + "/metrics")
+	resp, err := http.Get(cfg.ExternalConfig.GometrUrl + "/metrics")
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("Response status:", resp.Status)
-
+	currentDate := time.Now()
 	scanner := bufio.NewScanner(resp.Body)
-	for i := 0; scanner.Scan() && i < 5; i++ {
-		fmt.Println(scanner.Text())
+	for scanner.Scan() {
+		text := scanner.Text()
+		if string(text[0]) == "#" {
+			continue
+		}
+		splitStr := strings.Split(text, " ")
+		scheduler.processor.Add(models.Metric{
+			Name:  splitStr[0],
+			Value: splitStr[1],
+			Date:  currentDate,
+		})
 	}
 
 	if err := scanner.Err(); err != nil {
