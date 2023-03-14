@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"service/api"
 	"service/api/middleware"
-	db3 "service/internal/app/db"
+	"service/internal/app/db"
 	"service/internal/app/handlers"
 	"service/internal/app/processors"
 	"service/internal/app/schedulers"
-	"service/internal/cfg"
+	cfg "service/internal/config"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -18,14 +18,14 @@ import (
 )
 
 type AppServer struct {
-	config    cfg.Cfg
+	config    cfg.Application
 	ctx       context.Context
 	srv       *http.Server
 	db        *pgxpool.Pool
 	scheduler *gocron.Scheduler
 }
 
-func NewServer(config cfg.Cfg, ctx context.Context) *AppServer {
+func NewServer(config cfg.Application, ctx context.Context) *AppServer {
 	server := new(AppServer)
 	server.ctx = ctx
 	server.config = config
@@ -42,21 +42,21 @@ func (server *AppServer) Serve() {
 	server.scheduler.StartAsync()
 
 	// init database connection
-	log.Println(server.config.GetDBString())
-	server.db, err = pgxpool.Connect(server.ctx, server.config.GetDBString())
+	log.Println(server.config.DbUrl)
+	server.db, err = pgxpool.Connect(server.ctx, server.config.DbUrl)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// init storage
-	storage := db3.NewStorage(server.db)
+	storage := db.NewStorage(server.db)
 
 	// init processors
 	metricsProcessor := processors.NewMetricsProcessor(storage)
 
 	// schedule some jobs using fluent syntax
 	gometrScheduler := schedulers.NewGometrScheduler(metricsProcessor)
-	server.scheduler.Every(30).Seconds().Do(gometrScheduler.ParseGometr())
+	server.scheduler.Every(30).Seconds().Do(func() { gometrScheduler.ParseGometr() })
 
 	// init handlers
 	metricsHandler := handlers.NewMetricsHandler(metricsProcessor)

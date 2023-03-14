@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"service/internal/app/processors"
-	"service/internal/cfg"
+	cfg "service/internal/config"
 
 	log "github.com/sirupsen/logrus"
 )
-
-var config cfg.Cfg
 
 type GometrScheduler struct {
 	processor *processors.MetricsProcessor
@@ -24,9 +22,9 @@ func NewGometrScheduler(processor *processors.MetricsProcessor) *GometrScheduler
 
 func (scheduler *GometrScheduler) ParseGometr() error {
 	log.Println("[GometrScheduler] Start ParseGometr")
-	log.Println(config.GometrServiceUrl + "/metrics")
+	log.Println(cfg.ExternalConfig.GometrUrl + "/metrics")
 
-	resp, err := http.Get(config.GometrServiceUrl + "/metrics")
+	resp, err := http.Get(cfg.ExternalConfig.GometrUrl  + "/metrics")
 	if err != nil {
 		return err
 	}

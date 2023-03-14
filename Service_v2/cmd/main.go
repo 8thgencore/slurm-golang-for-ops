@@ -5,21 +5,22 @@ import (
 	"os"
 	"os/signal"
 	"service/internal/app"
-	"service/internal/cfg"
+	cfg "service/internal/config"
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	config := cfg.LoadAndStoreConfig()
+	cfg.ConfigSetup("config/settings.yml")
+	config := cfg.ApplicationConfig
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	server := app.NewServer(config, ctx)
+	server := app.NewServer(*config, ctx)
 
 	go func() {
 		oscall := <-c //если таки что то пришло
