@@ -18,14 +18,16 @@ type GometrScheduler struct {
 func NewGometrScheduler(processor *processors.MetricsProcessor) *GometrScheduler {
 	scheduler := new(GometrScheduler)
 	scheduler.processor = processor
+
 	return scheduler
 }
 
 func (scheduler *GometrScheduler) ParseGometr() error {
-	log.Infof("[GometrScheduler] Start ParseGometr")
+	log.Infof("Start ParseGometr")
 
-	resp, err := http.Get(cfg.ExternalConfig.GometrUrl + "/metrics")
+	resp, err := http.Get(cfg.ExternalConfig.GometrURL + "/metrics")
 	if err != nil {
+		log.Errorf("Cannot get metrics")
 		return err
 	}
 	defer resp.Body.Close()
@@ -45,9 +47,5 @@ func (scheduler *GometrScheduler) ParseGometr() error {
 		})
 	}
 
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	return nil
+	return scanner.Err()
 }

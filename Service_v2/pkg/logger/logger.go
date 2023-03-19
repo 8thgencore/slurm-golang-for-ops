@@ -83,6 +83,7 @@ func newEntry() *logrus.Entry {
 	entry.Data["file"] = file
 	entry.Data["line"] = line
 	entry.Data["function"] = function
+
 	return entry
 }
 
@@ -119,9 +120,9 @@ func getWriter() io.Writer {
 	if err != nil {
 		logger.Errorf("Failed to open log file: %v", err)
 		return os.Stdout
-	} else {
-		return file
 	}
+
+	return file
 }
 
 // Formatter implements logrus.Formatter interface.

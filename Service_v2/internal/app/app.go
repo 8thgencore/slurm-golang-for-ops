@@ -12,12 +12,13 @@ import (
 	cfg "service/internal/config"
 	"time"
 
+	log "service/pkg/logger"
+
 	"github.com/go-co-op/gocron"
 	"github.com/jackc/pgx/v4/pgxpool"
-	log "service/pkg/logger"
 )
 
-type AppServer struct {
+type Server struct {
 	config    cfg.Application
 	ctx       context.Context
 	srv       *http.Server
@@ -25,25 +26,25 @@ type AppServer struct {
 	scheduler *gocron.Scheduler
 }
 
-func NewServer(config cfg.Application, ctx context.Context) *AppServer {
-	server := new(AppServer)
+func NewServer(ctx context.Context, config cfg.Application) *Server {
+	server := new(Server)
 	server.ctx = ctx
 	server.config = config
 	// create a new scheduler with UTC time zone
 	server.scheduler = gocron.NewScheduler(time.UTC)
+
 	return server
 }
 
-func (server *AppServer) Serve() {
-	log.Infof("Starting server")
+func (server *Server) Serve() {
+	log.Infof("[!] Starting Server")
 	var err error
 
 	// start the scheduler asynchronously
 	server.scheduler.StartAsync()
 
 	// init database connection
-	log.Infof(server.config.DbUrl)
-	server.db, err = pgxpool.Connect(server.ctx, server.config.DbUrl)
+	server.db, err = pgxpool.Connect(server.ctx, server.config.DbURL)
 	if err != nil {
 		log.Errorf(err.Error())
 	}
@@ -70,7 +71,7 @@ func (server *AppServer) Serve() {
 		Handler: routes,
 	}
 
-	log.Infof("Server started")
+	log.Infof("[!] Server Started")
 
 	// run server
 	err = server.srv.ListenAndServe()
@@ -82,8 +83,8 @@ func (server *AppServer) Serve() {
 }
 
 // Shutdown stops the app an
-func (server *AppServer) Shutdown() {
-	log.Infof("server stopped")
+func (server *Server) Shutdown() {
+	log.Infof("[!] Server Stopped")
 
 	// Clears the scheduler
 	server.scheduler.Clear()
@@ -99,12 +100,8 @@ func (server *AppServer) Shutdown() {
 	// Shutdown server
 	var err error
 	if err = server.srv.Shutdown(ctxShutDown); err != nil {
-		log.Fatalf("server Shutdown Failed:%s", err)
+		log.Fatalf("[!] Server Shutdown Failed:%s", err)
 	}
 
-	log.Infof("server exited properly")
-
-	if err == http.ErrServerClosed {
-		err = nil
-	}
+	log.Infof("[!] Server exited properly")
 }

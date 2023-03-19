@@ -10,8 +10,8 @@ type Application struct {
 	Name    string
 	Mode    string
 	Domain  string
-	IsHttps bool
-	DbUrl   string
+	IsHTTPS bool
+	DbURL   string
 }
 
 func InitApplication(cfg *viper.Viper) *Application {
@@ -21,8 +21,8 @@ func InitApplication(cfg *viper.Viper) *Application {
 		Name:    cfg.GetString("name"),
 		Mode:    cfg.GetString("mode"),
 		Domain:  cfg.GetString("domain"),
-		IsHttps: cfg.GetBool("ishttps"),
-		DbUrl:   getDbUrl(),
+		IsHTTPS: cfg.GetBool("ishttps"),
+		DbURL:   getDbURL(),
 	}
 }
 
@@ -31,15 +31,16 @@ var ApplicationConfig = new(Application)
 func portDefault(cfg *viper.Viper) string {
 	if cfg.GetString("port") == "" {
 		return "8000"
-	} else {
-		return cfg.GetString("port")
 	}
+
+	return cfg.GetString("port")
 }
 
-func isHttpsDefault(cfg *viper.Viper) bool {
+//nolint:unused // in future
+func isHTTPSDefault(cfg *viper.Viper) bool {
 	if cfg.GetString("ishttps") == "" || cfg.GetBool("ishttps") == false {
 		return false
-	} else {
-		return true
 	}
+
+	return true
 }

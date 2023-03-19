@@ -14,6 +14,10 @@ import (
 func (storage *Storage) Add(metrics ...models.Metric) error {
 	ctx := context.Background()
 	tx, err := storage.databasePool.Begin(ctx)
+	if err != nil {
+		log.Errorf("Cannot create databasePool: %v", err)
+		return err
+	}
 	defer tx.Rollback(ctx)
 
 	query := "INSERT INTO metrics (name, value, timestamp) VALUES ($1, $2, $3)"
@@ -74,7 +78,6 @@ func (storage *Storage) List(name string, startDate time.Time, endDate time.Time
 	if limit != 0 {
 		query += fmt.Sprintf(" LIMIT $%d", placeholderNum)
 		args = append(args, limit)
-		placeholderNum++
 	}
 
 	var dbResult []models.Metric

@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	log "service/pkg/logger"
+
+	"github.com/spf13/viper"
 
 	"io/ioutil"
 	"os"
@@ -15,7 +16,7 @@ var cfgApplication *viper.Viper
 var cfgExternal *viper.Viper
 
 // Setup Config
-func ConfigSetup(path string) {
+func Setup(path string) {
 	viper.SetConfigFile(path)
 	content, err := ioutil.ReadFile(path)
 	if err != nil {

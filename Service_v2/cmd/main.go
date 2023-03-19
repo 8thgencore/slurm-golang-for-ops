@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	cfg.ConfigSetup("config/settings.yml")
+	cfg.Setup("config/settings.yml")
 	config := cfg.ApplicationConfig
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -19,7 +19,7 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	server := app.NewServer(*config, ctx)
+	server := app.NewServer(ctx, *config)
 
 	go func() {
 		oscall := <-c //если таки что то пришло

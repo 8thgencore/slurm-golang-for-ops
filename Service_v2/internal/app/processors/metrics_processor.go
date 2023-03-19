@@ -21,6 +21,7 @@ type MetricsProcessor struct {
 func NewMetricsProcessor(storage db.StorageInterface) *MetricsProcessor {
 	processor := new(MetricsProcessor)
 	processor.storage = storage
+
 	return processor
 }
 

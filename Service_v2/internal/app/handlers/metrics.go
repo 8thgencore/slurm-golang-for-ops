@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"service/internal/app/models"
 	"service/internal/app/processors"
 	log "service/pkg/logger"
 	"strconv"
@@ -16,6 +15,7 @@ type MetricsHandler struct {
 func NewMetricsHandler(processor *processors.MetricsProcessor) *MetricsHandler { //конструктор
 	handler := new(MetricsHandler)
 	handler.processor = processor
+
 	return handler
 }
 
@@ -73,9 +73,7 @@ func (handler *MetricsHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a slice of metrics to store the filtered and sorted results
-	result := make([]models.Metric, 0)
-
-	result = handler.processor.List(name, timeFrom, timeTo, offset, limit)
+	result := handler.processor.List(name, timeFrom, timeTo, offset, limit)
 
 	// wrapper result
 	var m = map[string]interface{}{

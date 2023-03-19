@@ -28,7 +28,7 @@ func InitDatabase(cfg *viper.Viper) *Database {
 
 var DatabaseConfig = new(Database)
 
-func getDbUrl() string {
+func getDbURL() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s",
 		DatabaseConfig.Username,

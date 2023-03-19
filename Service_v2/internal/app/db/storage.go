@@ -14,12 +14,12 @@ type StorageInterface interface {
 }
 
 type Storage struct {
-	itemStorage  StorageInterface
 	databasePool *pgxpool.Pool
 }
 
 func NewStorage(pool *pgxpool.Pool) *Storage {
 	storage := new(Storage)
 	storage.databasePool = pool
+
 	return storage
 }

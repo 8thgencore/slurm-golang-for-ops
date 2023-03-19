@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-func NotFound(w http.ResponseWriter, r *http.Request) {
+func NotFound(w http.ResponseWriter, _ *http.Request) {
 	WrapErrorWithStatus(w, errors.New("not found"), http.StatusNotFound)
 }

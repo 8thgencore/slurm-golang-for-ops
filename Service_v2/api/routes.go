@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
 	"service/internal/app/handlers"
+
+	"github.com/gorilla/mux"
 )
 
 func CreateRoutes(metricsHandler *handlers.MetricsHandler) *mux.Router {
@@ -11,5 +12,6 @@ func CreateRoutes(metricsHandler *handlers.MetricsHandler) *mux.Router {
 
 	//оборачиваем 404, для обработки NotFound
 	r.NotFoundHandler = r.NewRoute().HandlerFunc(handlers.NotFound).GetHandler()
+
 	return r
 }
