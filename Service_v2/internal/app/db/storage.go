@@ -1,10 +1,20 @@
 package db
 
 import (
+	"service/internal/app/models"
+	"time"
+
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+// Определяем интерфейс StorageInterface
+type StorageInterface interface {
+	Add(metric ...models.Metric) error
+	List(name string, startDate time.Time, endDate time.Time, offset int, limit int) []models.Metric
+}
+
 type Storage struct {
+	itemStorage  StorageInterface
 	databasePool *pgxpool.Pool
 }
 

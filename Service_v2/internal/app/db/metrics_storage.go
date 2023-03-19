@@ -42,7 +42,7 @@ func (storage *Storage) Add(metrics ...models.Metric) error {
 		return err
 	}
 
-	return err
+	return nil
 }
 
 func (storage *Storage) List(name string, startDate time.Time, endDate time.Time, offset int, limit int) []models.Metric {

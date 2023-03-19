@@ -7,11 +7,18 @@ import (
 	"time"
 )
 
+// Объявляем константы для ошибок
+var (
+	ErrEmptyName  = errors.New("Name should not be empty")
+	ErrEmptyValue = errors.New("Value should not be empty")
+	ErrEmptyDate  = errors.New("Date shall be filled")
+)
+
 type MetricsProcessor struct {
-	storage *db.Storage
+	storage db.StorageInterface
 }
 
-func NewMetricsProcessor(storage *db.Storage) *MetricsProcessor {
+func NewMetricsProcessor(storage db.StorageInterface) *MetricsProcessor {
 	processor := new(MetricsProcessor)
 	processor.storage = storage
 	return processor
@@ -19,15 +26,15 @@ func NewMetricsProcessor(storage *db.Storage) *MetricsProcessor {
 
 func (processor *MetricsProcessor) Add(metric models.Metric) error {
 	if metric.Name == "" {
-		return errors.New("Name should not be empty")
+		return ErrEmptyName
 	}
 
 	if metric.Value == "" {
-		return errors.New("Value should not be empty")
+		return ErrEmptyValue
 	}
 
 	if metric.Date.IsZero() {
-		return errors.New("Date shall be filled")
+		return ErrEmptyDate
 	}
 
 	return processor.storage.Add(metric)
