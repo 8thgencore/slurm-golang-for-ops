@@ -8,8 +8,6 @@ import (
 	"service/internal/app/db"
 	"service/internal/app/handlers"
 	"service/internal/app/processors"
-	"service/internal/checker"
-	"service/internal/checker/gometrclient"
 	cfg "service/internal/config"
 	log "service/pkg/logger"
 	"time"
@@ -27,61 +25,72 @@ type Server struct {
 }
 
 func NewServer(ctx context.Context, config cfg.Application) *Server {
-	server := new(Server)
-	server.ctx = ctx
-	server.config = config
-	// create a new scheduler with UTC time zone
+	server := &Server{
+		config: config,
+		ctx:    ctx,
+	}
 	server.scheduler = gocron.NewScheduler(time.UTC)
 
 	return server
 }
 
-func (server *Server) Serve() {
-	log.Infof("[!] Starting Server")
+// Initialize the server's database connection
+func (server *Server) initDB() {
 	var err error
-
-	// start the scheduler asynchronously
-	server.scheduler.StartAsync()
-
-	// init database connection
 	server.db, err = pgxpool.Connect(server.ctx, server.config.DbURL)
 	if err != nil {
 		log.Errorf(err.Error())
 	}
+}
 
-	// init storage
+// Start the server
+func (server *Server) start() {
+	// Init storage
 	storage := db.NewStorage(server.db)
 
-	// init processors
+	// Init metrics processor
 	metricsProcessor := processors.NewMetricsProcessor(storage)
 
-	// run checkers
-	runChecker(server, metricsProcessor)
-
-	// init handlers
+	// Init metrics handler
 	metricsHandler := handlers.NewMetricsHandler(metricsProcessor)
 
-	// init router
+	// Init router
 	routes := api.CreateRoutes(metricsHandler)
 	routes.Use(middleware.RequestLog)
 
+	// Create HTTP server
 	server.srv = &http.Server{
 		Addr:    ":" + server.config.Port,
 		Handler: routes,
 	}
 
+	// Run checkers
+	runChecker(context.Background(), server, metricsProcessor)
+
 	log.Infof("[!] Server Started")
 
-	// run server
-	err = server.srv.ListenAndServe()
+	// Run server
+	err := server.srv.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Errorf(err.Error())
 	}
-
-	return
 }
 
-// Shutdown stops the app an
+// Serve starts the server and listens for incoming requests
+func (server *Server) Serve() {
+	log.Infof("[!] Starting Server")
+
+	// Initialize the database connection
+	server.initDB()
+
+	// Start the scheduler asynchronously
+	server.scheduler.StartAsync()
+
+	// Start the server
+	server.start()
+}
+
+// Shutdown the server
 func (server *Server) Shutdown() {
 	log.Infof("[!] Server Stopped")
 
@@ -89,36 +98,18 @@ func (server *Server) Shutdown() {
 	server.scheduler.Clear()
 	server.scheduler.Stop()
 
-	// Close database connection
+	// Close the database connection
 	ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	server.db.Close()
 	defer func() {
 		cancel()
 	}()
 
-	// Shutdown server
+	// Shutdown the server
 	var err error
 	if err = server.srv.Shutdown(ctxShutDown); err != nil {
 		log.Fatalf("[!] Server Shutdown Failed:%s", err)
 	}
 
 	log.Infof("[!] Server exited properly")
-}
-
-func runChecker(server *Server, proccesor *processors.MetricsProcessor) {
-	che := new(checker.Checker)
-	ch := make(chan checker.Checkable, 1)
-
-	parent := context.Background()
-	_, cancel := context.WithCancel(parent)
-
-	// add object with channel
-	ch <- gometrclient.NewGoMetrClient(proccesor)
-	go che.Add(ch)
-
-	// run checker
-	server.scheduler.Every(30).Seconds().Do(func() { go che.Run() })
-
-	// stop checker
-	che.Stop(cancel)
 }

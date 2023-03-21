@@ -2,6 +2,8 @@ package gometrclient
 
 import (
 	"bufio"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"service/internal/app/models"
 	"service/internal/app/processors"
@@ -54,7 +56,6 @@ func (g GoMetrClient) Ping() error {
 
 func (g GoMetrClient) GetID() string {
 	return ""
-	// return g.url
 }
 
 func (g GoMetrClient) Health() bool {
@@ -65,5 +66,19 @@ func (g GoMetrClient) Health() bool {
 	}
 	defer resp.Body.Close()
 
-	return true
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Cannot get metrics")
+	}
+
+	var health Health
+	err = json.Unmarshal(body, &health)
+	if err != nil {
+		log.Errorf("Cannot get metrics")
+	}
+
+	if health.Checks.PingMysql.Status == string(PassStatus) {
+		return true
+	}
+	return false
 }
