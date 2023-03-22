@@ -11,6 +11,12 @@ require (
 )
 
 require (
+	github.com/go-ping/ping v1.1.0 // indirect
+	github.com/google/uuid v1.2.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+)
+
+require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-co-op/gocron v1.19.0
 	github.com/golang/mock v1.6.0

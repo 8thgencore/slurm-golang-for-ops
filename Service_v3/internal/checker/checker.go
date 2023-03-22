@@ -41,26 +41,26 @@ func (c *Checker) String() string {
 func (c *Checker) Check() {
 	for _, val := range c.items {
 		if !val.Health() {
-			log.Errorf(val.GetID() + " не работает")
+			log.Warnf("Service not work: %s", val.GetID())
 		}
 	}
 }
 
 func (c *Checker) Run() {
-	log.Infof("‼️ Запуск проверок")
+	log.Infof("Checker: started")
 	for _, val := range c.items {
 		go check(val)
 	}
 }
 
 func (c *Checker) Stop(cancel context.CancelFunc) {
-	log.Infof("‼️ Проверки остановлены")
+	log.Infof("Checker: stopped")
 	cancel()
 }
 
 func check(client Checkable) {
 	if !client.Health() {
-		log.Warnf("%s не работает, время: %v\n", client.GetID())
+		log.Warnf("Service not work: %s", client.GetID())
 	} else {
 		err := client.GetMetrics()
 		if err != nil {

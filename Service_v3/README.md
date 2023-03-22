@@ -28,3 +28,10 @@ offset=10
 ```
 http://ip:8350/metrics/list?name=go_gc_duration_seconds_count&time_from=2023-03-14T19:57:40.106073Z&limit=5&offset=10
 ```
+
+## Дополнительно
+
+Для работы утилиты ping
+```bash
+sudo sysctl -w net.ipv4.ping_group_range="0 2147483647"
+```

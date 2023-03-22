@@ -34,15 +34,6 @@ func NewServer(ctx context.Context, config cfg.Application) *Server {
 	return server
 }
 
-// Initialize the server's database connection
-func (server *Server) initDB() {
-	var err error
-	server.db, err = pgxpool.Connect(server.ctx, server.config.DbURL)
-	if err != nil {
-		log.Errorf(err.Error())
-	}
-}
-
 // Start the server
 func (server *Server) start() {
 	// Init storage
@@ -65,13 +56,22 @@ func (server *Server) start() {
 	}
 
 	// Run checkers
-	runChecker(context.Background(), server, metricsProcessor)
+	runChecker(server, metricsProcessor)
 
 	log.Infof("[!] Server Started")
 
 	// Run server
 	err := server.srv.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
+		log.Errorf(err.Error())
+	}
+}
+
+// Initialize the server's database connection
+func (server *Server) initDB() {
+	var err error
+	server.db, err = pgxpool.Connect(server.ctx, server.config.DbURL)
+	if err != nil {
 		log.Errorf(err.Error())
 	}
 }

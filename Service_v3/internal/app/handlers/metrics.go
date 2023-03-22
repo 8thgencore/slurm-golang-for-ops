@@ -20,8 +20,6 @@ func NewMetricsHandler(processor *processors.MetricsProcessor) *MetricsHandler {
 }
 
 func (handler *MetricsHandler) List(w http.ResponseWriter, r *http.Request) {
-	log.Infof("Listing metrics...")
-
 	var err error
 
 	// get limit from query parameter or use default value of 10 if not specified or invalid

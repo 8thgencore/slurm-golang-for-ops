@@ -13,18 +13,18 @@ import (
 	"time"
 )
 
-type GoMetrClient struct {
+type Client struct {
 	processor *processors.MetricsProcessor
 }
 
-func NewGoMetrClient(processor *processors.MetricsProcessor) *GoMetrClient {
-	checker := new(GoMetrClient)
+func NewClient(processor *processors.MetricsProcessor) *Client {
+	checker := new(Client)
 	checker.processor = processor
 
 	return checker
 }
 
-func (g *GoMetrClient) GetMetrics() error {
+func (c *Client) GetMetrics() error {
 	resp, err := http.Get(cfg.ExternalConfig.GometrURL + "/metrics")
 	if err != nil {
 		log.Errorf("Cannot get metrics")
@@ -40,7 +40,7 @@ func (g *GoMetrClient) GetMetrics() error {
 			continue
 		}
 		splitStr := strings.Split(text, " ")
-		g.processor.Add(models.Metric{
+		c.processor.Add(models.Metric{
 			Name:  splitStr[0],
 			Value: splitStr[1],
 			Date:  currentDate,
@@ -50,18 +50,18 @@ func (g *GoMetrClient) GetMetrics() error {
 	return scanner.Err()
 }
 
-func (g GoMetrClient) Ping() error {
+func (c *Client) Ping() error {
 	return nil
 }
 
-func (g GoMetrClient) GetID() string {
-	return ""
+func (c *Client) GetID() string {
+	return "gometr_service"
 }
 
-func (g GoMetrClient) Health() bool {
+func (c *Client) Health() bool {
 	resp, err := http.Get(cfg.ExternalConfig.GometrURL + "/health")
 	if err != nil {
-		log.Errorf("Cannot get metrics")
+		log.Errorf("Service is not healthy")
 		return false
 	}
 	defer resp.Body.Close()
@@ -80,5 +80,6 @@ func (g GoMetrClient) Health() bool {
 	if health.Checks.PingMysql.Status == string(PassStatus) {
 		return true
 	}
+
 	return false
 }
